@@ -32,6 +32,8 @@
 
 Download audio from <https://aphextwin.warp.net>
 
+_Note: Redistribution of downloaded image data is prohibited. Please keep it to private use._
+
 ## Install
 
 ```bash
@@ -48,13 +50,27 @@ pipx install afxdl
 
 ```shellsession
 $ afxdl ~/Music/AphexTwin
+[λ] === 001 ===
 [-] Fetching album information...
 [+] Found: 'Blackbox Life Recorder 21f / in a room7 F760' (9 tracks)
 [-] Downloading albums...
 [+] Done!
 ...
+[λ] === 038 ===
 [-] Fetching album information...
 [+] All Finished!
+
+$ tree AphexTwin/
+AphexTwin
+├── 109100-collapse-ep
+│   ├── 688346-t69-collapse.mp3
+│   ├── 688347-1st-44.mp3
+│   ├── 688348-mt1-t29r2.mp3
+│   ├── 688349-abundance10edit2-r8s-fz20m-a-909.mp3
+│   ├── 688350-pthex.mp3
+│   └── 688351-t69-collapse-durichroma.mp3
+├── 399837-blackbox-life-recorder-21f-in-a-room7-f760
+...
 ```
 
 ## Help
