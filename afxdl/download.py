@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import contextlib
 import re
 from typing import TYPE_CHECKING, NamedTuple
 from unicodedata import normalize
 
+# mutagen is marked as pyted package, but almost interfaces are untyped.
 from mutagen._file import File as MutagenFile
 from mutagen.easyid3 import EasyID3
-
-# mutagen is marked as pyted package, but almost interfaces are untyped.
 from mutagen.id3 import ID3
 from mutagen.id3._frames import APIC
+from mutagen.id3._util import error as MutagenUtilError  # noqa: N812
 from mutagen.mp3 import EasyMP3
 
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ class Metadata(NamedTuple):
 
 
 def download(album: Album, session: Session, *, save_dir: Path, overwrite: bool = False) -> bool:
-    album_dir = save_dir / __slugify(album.title)
+    album_dir = save_dir / __slugify(f"{album.album_id}-{album.title}")
     if album_dir.exists() and not overwrite:
         return False
 
@@ -74,11 +75,12 @@ def __save_track(
     if not res.ok or res.headers.get("Content-Type") != "audio/mpeg":
         # breakpoint()  # debug  # noqa: ERA001
         return
-    audio_path = album_dir / (__slugify(f"{track.track_id} - {track.title}") + ".mp3")
+    audio_path = album_dir / __slugify(f"{track.track_id}-{track.title}.mp3")
     with audio_path.open("wb") as f:
         f.write(res.content)
     audio = MutagenFile(audio_path, easy=True)
-    audio.add_tags()
+    with contextlib.suppress(MutagenUtilError):
+        audio.add_tags()
     if not isinstance(audio, (EasyID3, EasyMP3)):
         # breakpoint()  # debug  # noqa: ERA001
         return
