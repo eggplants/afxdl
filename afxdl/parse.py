@@ -24,6 +24,7 @@ BASE_URL = "https://aphextwin.warp.net"
 def generate_albums(session: requests.Session) -> Generator[Album, None, None]:
     for idx, _ in enumerate(iter(int, 1)):
         yield from __generate_albums_by_page(idx + 1, session)
+    return None
 
 
 def __generate_albums_by_page(page_idx: int, session: requests.Session) -> Generator[Album, None, None]:
@@ -49,6 +50,7 @@ def __generate_albums_by_page(page_idx: int, session: requests.Session) -> Gener
             catalog_number=catalog_number,
             tracklists=tracklists,
         )
+    return None
 
 
 def __get_tracklists(album_id: str, session: requests.Session) -> list[Tracklist]:

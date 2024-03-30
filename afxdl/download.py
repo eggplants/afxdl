@@ -75,7 +75,7 @@ def __save_track(
     if not res.ok or res.headers.get("Content-Type") != "audio/mpeg":
         # breakpoint()  # debug  # noqa: ERA001
         return
-    audio_path = album_dir / __slugify(f"{track.track_id}-{track.title}.mp3")
+    audio_path = album_dir / (__slugify(f"{track.track_id}-{track.title}") + ".mp3")
     with audio_path.open("wb") as f:
         f.write(res.content)
     audio = MutagenFile(audio_path, easy=True)

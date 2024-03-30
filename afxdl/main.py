@@ -63,7 +63,8 @@ def main(test_args: list[str] | None = None) -> None:
     args = __parse_args(test_args)
     with requests.Session() as session:
         g_album = generate_albums(session)
-        while True:
+        for idx, _ in enumerate(iter(int, 1)):
+            print(f"[λ] === {idx + 1:03} ===")
             print("[-] Fetching album information...")
             album = next(g_album, True)
             if isinstance(album, bool):
