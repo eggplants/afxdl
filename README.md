@@ -54,14 +54,14 @@ $ afxdl ~/Music/AphexTwin
 [-] Fetching album information...
 [+] Found: 'Blackbox Life Recorder 21f / in a room7 F760' (9 tracks)
 [-] Downloading albums...
-[+] Done!
+[+] Saved: '/home/eggplants/Music/AphexTwin/109100-collapse-ep'
 ...
 [λ] === 038 ===
 [-] Fetching album information...
 [+] All Finished!
 
-$ tree AphexTwin/
-AphexTwin
+$ tree ~/Music/AphexTwin/
+/home/eggplants/Music/AphexTwin
 ├── 109100-collapse-ep
 │   ├── 688346-t69-collapse.mp3
 │   ├── 688347-1st-44.mp3

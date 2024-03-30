@@ -87,13 +87,14 @@ def main(test_args: list[str] | None = None) -> None:
             total_track = sum(len(tl.tracks) for tl in album.tracklists)
             print(f"[+] Found: {album.title!r} ({total_track} tracks)")
             print("[-] Downloading albums...")
-            if download(
+            album_dir = download(
                 album,
                 session,
                 save_dir=args.save_dir,
                 overwrite=bool(args.overwrite),
-            ):
-                print("[+] Done!")
+            )
+            if album_dir:
+                print(f"[+] Saved: {str(album_dir)!r}")
             else:
                 print("[!] Skipped since album already exists. (use `-o` to overwrite)")
     return print("[+] All Finished!")

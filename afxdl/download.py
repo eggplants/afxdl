@@ -36,15 +36,15 @@ def download(
     *,
     save_dir: Path,
     overwrite: bool = False,
-) -> bool:
+) -> Path | None:
     album_dir = save_dir / __slugify(f"{album.album_id}-{album.title}")
     if album_dir.exists() and not overwrite:
-        return False
+        return None
 
     album_dir.mkdir(parents=True, exist_ok=True)
     for metadata in __generate_track_metadata(album):
         __save_track(album_dir, session, metadata)
-    return True
+    return album_dir
 
 
 def __generate_track_metadata(
