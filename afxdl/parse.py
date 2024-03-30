@@ -23,34 +23,43 @@ BASE_URL = "https://aphextwin.warp.net"
 
 def generate_albums(session: requests.Session) -> Generator[Album, None, None]:
     for idx, _ in enumerate(iter(int, 1)):
-        yield from __generate_albums_by_page(idx + 1, session)
+        albums = __get_albums_by_page(idx + 1, session)
+        if albums is None:
+            break
+        yield from albums
     return None
 
 
-def __generate_albums_by_page(page_idx: int, session: requests.Session) -> Generator[Album, None, None]:
+def __get_albums_by_page(page_idx: int, session: requests.Session) -> list[Album] | None:
     bs = BeautifulSoup(session.get(f"{BASE_URL}/fragment/index/{page_idx}").text, "html.parser")
-    for elm in bs.find_all("li", class_="product"):
-        href = elm.find("a", class_="main-product-image").get("href", "")
+    albums: list[Album] = []
+    product_elms = bs.find_all("li", class_="product")
+    if len(product_elms) < 1:
+        return None
+    for product_elm in product_elms:
+        href = product_elm.find("a", class_="main-product-image").get("href", "")
         album_id = Path(href).name.split("-")[0]
         tracklists = tuple(__get_tracklists(album_id, session))
         if len(tracklists) < 1:
             continue
-        img = elm.img
-        date_str = elm.find("dd", class_="product-release-date product-release-date-past").text.strip()
+        img = product_elm.img
+        date_str = product_elm.find("dd", class_="product-release-date product-release-date-past").text.strip()
         release_date = datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=timezone.utc).date()
-        catalog_number_elm = elm.find("dd", class_="catalogue-number")
+        catalog_number_elm = product_elm.find("dd", class_="catalogue-number")
         catalog_number = catalog_number_elm.text.strip() if catalog_number_elm else None
-        yield Album(
-            album_id=album_id,
-            page_url=BASE_URL + href,
-            title=img.get("alt", ""),
-            cover_url=img.get("src", ""),
-            artist=elm.find("dd", class_="artist").find(class_="undecorated-link").text,
-            release_date=release_date,
-            catalog_number=catalog_number,
-            tracklists=tracklists,
+        albums.append(
+            Album(
+                album_id=album_id,
+                page_url=BASE_URL + href,
+                title=img.get("alt", "").strip(),
+                cover_url=img.get("src", ""),
+                artist=product_elm.find("dd", class_="artist").find(class_="undecorated-link").text,
+                release_date=release_date,
+                catalog_number=catalog_number,
+                tracklists=tracklists,
+            ),
         )
-    return None
+    return albums
 
 
 def __get_tracklists(album_id: str, session: requests.Session) -> list[Tracklist]:
