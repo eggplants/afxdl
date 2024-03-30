@@ -5,6 +5,7 @@ from os import get_terminal_size
 from pathlib import Path
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
 from . import __version__
 from .download import download
@@ -62,6 +63,11 @@ def __parse_args(test_args: list[str] | None = None) -> argparse.Namespace:
 def main(test_args: list[str] | None = None) -> None:
     args = __parse_args(test_args)
     with requests.Session() as session:
+        session.mount(
+            "https://",
+            HTTPAdapter(max_retries=Retry(total=5, backoff_factor=10, status_forcelist=[429, 500, 502, 503, 504])),
+        )
+
         g_album = generate_albums(session)
         for idx, _ in enumerate(iter(int, 1)):
             print(f"[λ] === {idx + 1:03} ===")
