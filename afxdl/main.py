@@ -12,7 +12,10 @@ from .download import download
 from .parse import generate_albums
 
 
-class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
+class CustomFormatter(
+    argparse.ArgumentDefaultsHelpFormatter,
+    argparse.RawDescriptionHelpFormatter,
+):
     pass
 
 
@@ -65,20 +68,31 @@ def main(test_args: list[str] | None = None) -> None:
     with requests.Session() as session:
         session.mount(
             "https://",
-            HTTPAdapter(max_retries=Retry(total=5, backoff_factor=10, status_forcelist=[429, 500, 502, 503, 504])),
+            HTTPAdapter(
+                max_retries=Retry(
+                    total=5,
+                    backoff_factor=10,
+                    status_forcelist=[429, 500, 502, 503, 504],
+                ),
+            ),
         )
 
-        g_album = generate_albums(session)
+        album_generator = generate_albums(session)
         for idx, _ in enumerate(iter(int, 1)):
             print(f"[λ] === {idx + 1:03} ===")
             print("[-] Fetching album information...")
-            album = next(g_album, True)
+            album = next(album_generator, True)
             if isinstance(album, bool):
                 break
             total_track = sum(len(tl.tracks) for tl in album.tracklists)
             print(f"[+] Found: {album.title!r} ({total_track} tracks)")
             print("[-] Downloading albums...")
-            if download(album, session, save_dir=args.save_dir, overwrite=bool(args.overwrite)):
+            if download(
+                album,
+                session,
+                save_dir=args.save_dir,
+                overwrite=bool(args.overwrite),
+            ):
                 print("[+] Done!")
             else:
                 print("[!] Skipped since album already exists. (use `-o` to overwrite)")

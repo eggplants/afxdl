@@ -33,11 +33,7 @@ requires = [
 afxdl = "afxdl.main:main"
 
 [tool.black]
-line-length = 120
 target-version = ['py39']
-
-[tool.ruff]
-line-length = 120
 
 [tool.ruff.lint]
 select = ["ALL"]

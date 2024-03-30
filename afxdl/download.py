@@ -9,7 +9,7 @@ from unicodedata import normalize
 from mutagen._file import File as MutagenFile
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3
-from mutagen.id3._frames import APIC
+from mutagen.id3._frames import APIC, COMM
 from mutagen.id3._util import error as MutagenUtilError  # noqa: N812
 from mutagen.mp3 import EasyMP3
 
@@ -30,7 +30,13 @@ class Metadata(NamedTuple):
     total_track: int
 
 
-def download(album: Album, session: Session, *, save_dir: Path, overwrite: bool = False) -> bool:
+def download(
+    album: Album,
+    session: Session,
+    *,
+    save_dir: Path,
+    overwrite: bool = False,
+) -> bool:
     album_dir = save_dir / __slugify(f"{album.album_id}-{album.title}")
     if album_dir.exists() and not overwrite:
         return False
@@ -102,14 +108,22 @@ def __save_track(
 
     audio = ID3(audio_path)  # type: ignore[no-untyped-call]
     res = session.get(str(album.cover_url))
-    image_type = "audio/mpeg"
     audio.add(  # type: ignore[no-untyped-call]
         APIC(  # type: ignore[no-untyped-call]
-            mime=image_type,
+            mime=res.headers["Content-Type"],
             type=3,
             data=res.content,
         ),
     )
+    if track.description:
+        audio.add(  # type: ignore[no-untyped-call]
+            COMM(  # type: ignore[no-untyped-call]
+                encoding=3,
+                lang="eng",
+                desc="Description",
+                text=[track.description],
+            ),
+        )
     audio.save()
 
 

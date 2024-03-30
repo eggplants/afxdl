@@ -30,8 +30,14 @@ def generate_albums(session: requests.Session) -> Generator[Album, None, None]:
     return None
 
 
-def __get_albums_by_page(page_idx: int, session: requests.Session) -> list[Album] | None:
-    bs = BeautifulSoup(session.get(f"{BASE_URL}/fragment/index/{page_idx}").text, "html.parser")
+def __get_albums_by_page(
+    page_idx: int,
+    session: requests.Session,
+) -> list[Album] | None:
+    bs = BeautifulSoup(
+        session.get(f"{BASE_URL}/fragment/index/{page_idx}").text,
+        "html.parser",
+    )
     albums: list[Album] = []
     product_elms = bs.find_all("li", class_="product")
     if len(product_elms) < 1:
@@ -43,19 +49,27 @@ def __get_albums_by_page(page_idx: int, session: requests.Session) -> list[Album
         if len(tracklists) < 1:
             continue
         img = product_elm.img
-        date_str = product_elm.find("dd", class_="product-release-date product-release-date-past").text.strip()
-        release_date = datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=timezone.utc).date()
+        date_str = product_elm.find(
+            "dd",
+            class_="product-release-date product-release-date-past",
+        ).text.strip()
+        release_date = (
+            datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=timezone.utc).date()
+        )
         catalog_number_elm = product_elm.find("dd", class_="catalogue-number")
-        catalog_number = catalog_number_elm.text.strip() if catalog_number_elm else None
         albums.append(
             Album(
                 album_id=album_id,
                 page_url=BASE_URL + href,
                 title=img.get("alt", "").strip(),
                 cover_url=img.get("src", ""),
-                artist=product_elm.find("dd", class_="artist").find(class_="undecorated-link").text,
+                artist=product_elm.find("dd", class_="artist")
+                .find(class_="undecorated-link")
+                .text,
                 release_date=release_date,
-                catalog_number=catalog_number,
+                catalog_number=(
+                    catalog_number_elm.text.strip() if catalog_number_elm else None
+                ),
                 tracklists=tracklists,
             ),
         )
@@ -73,27 +87,32 @@ def __get_tracklists(album_id: str, session: requests.Session) -> list[Tracklist
         tracks: list[Track] = []
         list_number = list_idx + 1
 
-        indexed_track_elms = enumerate(list_elm.find_all("li", class_="track player-aware"))
-        for item_idx, item_elm in indexed_track_elms:
+        for item_idx, item_elm in enumerate(
+            list_elm.find_all("li", class_="track player-aware"),
+        ):
             item_number = item_idx + 1
             track_id = item_elm.get("data-id")
-            resolve_url = f"{BASE_URL}/player/resolve/{album_id}-{list_number}-{item_number}"
-            # print(resolve_url)  # debug  # noqa: ERA001
-            page_url = Url(f"{release_url}#track-{track_id}")
-            trial_url = Url(session.get(resolve_url).text.strip())
-
-            track = Track(
-                track_id=track_id,
-                title=(
-                    item_elm.find("h3", class_="actions-track-name") or item_elm.find("span", itemprop=True)
-                ).text.strip(),
-                page_url=page_url,
-                trial_url=trial_url,
-                number=item_number,
-                duration=item_elm.find("span", class_="track-duration").text.strip(),
-                description=item_elm.p.text if item_elm.p else None,
+            resolve_url = (
+                f"{BASE_URL}/player/resolve/{album_id}-{list_number}-{item_number}"
             )
-            tracks.append(track)
+            # print(resolve_url)  # debug  # noqa: ERA001
+            tracks.append(
+                Track(
+                    track_id=track_id,
+                    title=(
+                        item_elm.find("h3", class_="actions-track-name")
+                        or item_elm.find("span", itemprop=True)
+                    ).text.strip(),
+                    page_url=Url(f"{release_url}#track-{track_id}"),
+                    trial_url=Url(session.get(resolve_url).text.strip()),
+                    number=item_number,
+                    duration=item_elm.find(
+                        "span",
+                        class_="track-duration",
+                    ).text.strip(),
+                    description=item_elm.p.text if item_elm.p else None,
+                ),
+            )
         tracklists.append(
             Tracklist(tracks=tuple(tracks), number=list_number),
         )
