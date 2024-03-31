@@ -1,3 +1,5 @@
+"""Main module for afxdl."""
+
 from __future__ import annotations
 
 import argparse
@@ -16,10 +18,21 @@ class CustomFormatter(
     argparse.ArgumentDefaultsHelpFormatter,
     argparse.RawDescriptionHelpFormatter,
 ):
-    pass
+    """Custom formatter for argparse."""
 
 
 def __dir_path(path_str: str) -> Path:
+    """Validate path string.
+
+    Args:
+        path_str (str): Path string.
+
+    Raises:
+        argparse.ArgumentTypeError: If path is not a valid path.
+
+    Returns:
+        Path: Path object.
+    """
     path = Path(path_str)
     if not path.exists() or path.is_dir():
         return path
@@ -29,6 +42,14 @@ def __dir_path(path_str: str) -> Path:
 
 
 def __parse_args(test_args: list[str] | None = None) -> argparse.Namespace:
+    """Parse arguments.
+
+    Args:
+        test_args (list[str] | None, optional): Test arguments. Defaults to None.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(
         prog="afxdl",
         description="download audio from <aphextwin.warp.net>",
@@ -64,6 +85,11 @@ def __parse_args(test_args: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(test_args: list[str] | None = None) -> None:
+    """Main function for afxdl.
+
+    Args:
+        test_args (list[str] | None, optional): Test arguments. Defaults to None.
+    """
     args = __parse_args(test_args)
     with requests.Session() as session:
         session.mount(

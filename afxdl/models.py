@@ -1,3 +1,5 @@
+"""Data models for albums and tracks."""
+
 from __future__ import annotations
 
 from datetime import date  # noqa: TCH003
@@ -6,11 +8,15 @@ from pydantic import BaseModel, Field, HttpUrl
 
 
 class StrictBaseModel(BaseModel):
+    """Strict base model."""
+
     class Config:
         validate_assignment = True
 
 
 class Track(StrictBaseModel):
+    """Track model."""
+
     track_id: str = Field(..., min_length=6, max_length=7, pattern=r"^\d{6,7}$")
     title: str = Field(..., min_length=1)
     page_url: HttpUrl
@@ -21,11 +27,15 @@ class Track(StrictBaseModel):
 
 
 class Tracklist(StrictBaseModel):
+    """Tracklist model."""
+
     tracks: tuple[Track, ...] = Field(..., min_length=1)
     number: int = Field(..., gt=0)
 
 
 class Album(StrictBaseModel):
+    """Album model."""
+
     album_id: str = Field(..., min_length=5, max_length=6, pattern=r"^\d{5,6}$")
     title: str = Field(..., min_length=1)
     artist: str = Field(..., min_length=1)

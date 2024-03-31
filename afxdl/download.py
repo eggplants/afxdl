@@ -1,3 +1,5 @@
+"""Download tracks by using album data."""
+
 from __future__ import annotations
 
 import contextlib
@@ -6,7 +8,9 @@ from typing import TYPE_CHECKING, NamedTuple
 from unicodedata import normalize
 
 # mutagen is marked as pyted package, but almost interfaces are untyped.
-from mutagen._file import File as MutagenFile
+from mutagen._file import (
+    File as MutagenFile,  # pyright: ignore[reportUnknownVariableType]
+)
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3
 from mutagen.id3._frames import APIC, COMM
@@ -23,6 +27,8 @@ if TYPE_CHECKING:
 
 
 class Metadata(NamedTuple):
+    """Metadata for a track."""
+
     album: Album
     tracklist: Tracklist
     track: Track
@@ -37,6 +43,17 @@ def download(
     save_dir: Path,
     overwrite: bool = False,
 ) -> Path | None:
+    """Download tracks by using album data.
+
+    Args:
+        album (Album): Album data to download.
+        session (Session): Session object for downloading.
+        save_dir (Path): Directory to save albums.
+        overwrite (bool): Overwrite saved albums. Defaults to False.
+
+    Returns:
+        Path | None: Path to saved album directory or None if album is already saved.
+    """
     album_dir = save_dir / __slugify(f"{album.album_id}-{album.title}")
     if album_dir.exists() and not overwrite:
         return None
@@ -50,6 +67,14 @@ def download(
 def __generate_track_metadata(
     album: Album,
 ) -> Generator[Metadata, None, None]:
+    """Generate metadata for each track.
+
+    Args:
+        album (Album):  Album data.
+
+    Yields:
+        Generator[Metadata, None, None]: Metadata for each track.
+    """
     total_disk = len(album.tracklists)
     for tracklist in album.tracklists:
         total_track = len(tracklist.tracks)
@@ -69,6 +94,13 @@ def __save_track(
     session: Session,
     metadata: Metadata,
 ) -> None:
+    """Save track data to a file.
+
+    Args:
+        album_dir (Path): Directory to save tracks.
+        session (Session): Session object for downloading.
+        metadata (Metadata): Metadata for a track.
+    """
     (
         album,
         tracklist,
@@ -79,17 +111,21 @@ def __save_track(
 
     res = session.get(str(track.trial_url))
     if not res.ok or res.headers.get("Content-Type") != "audio/mpeg":
-        # breakpoint()  # debug  # noqa: ERA001
-        return
+        raise ValueError
+
     audio_path = album_dir / (__slugify(f"{track.track_id}-{track.title}") + ".mp3")
     with audio_path.open("wb") as f:
         f.write(res.content)
+
     audio = MutagenFile(audio_path, easy=True)
-    with contextlib.suppress(MutagenUtilError):
-        audio.add_tags()
+
     if not isinstance(audio, (EasyID3, EasyMP3)):
-        # breakpoint()  # debug  # noqa: ERA001
-        return
+        msg = f"Failed to load audio file: {audio_path}"
+        raise TypeError(msg)
+    if type(audio) is EasyMP3:
+        with contextlib.suppress(MutagenUtilError):
+            audio.add_tags()  # type: ignore[no-untyped-call]
+
     audio["title"] = track.title
     audio["artist"] = album.artist
     audio["album"] = album.title
@@ -104,11 +140,11 @@ def __save_track(
     release_date = album.release_date.isoformat()
     audio["date"] = release_date
     audio["originaldate"] = release_date
-    audio.save()
+    audio.save()  # pyright: ignore[reportUnknownMemberType]
 
     audio = ID3(audio_path)  # type: ignore[no-untyped-call]
     res = session.get(str(album.cover_url))
-    audio.add(  # type: ignore[no-untyped-call]
+    audio.add(  # pyright: ignore[reportUnknownMemberType]
         APIC(  # type: ignore[no-untyped-call]
             mime=res.headers["Content-Type"],
             type=3,
@@ -116,7 +152,7 @@ def __save_track(
         ),
     )
     if track.description:
-        audio.add(  # type: ignore[no-untyped-call]
+        audio.add(  # pyright: ignore[reportUnknownMemberType]
             COMM(  # type: ignore[no-untyped-call]
                 encoding=3,
                 lang="eng",
@@ -124,10 +160,18 @@ def __save_track(
                 text=[track.description],
             ),
         )
-    audio.save()
+    audio.save()  # pyright: ignore[reportUnknownMemberType]
 
 
 def __slugify(target: str) -> str:
+    """Slugify a string.
+
+    Args:
+        target (str): String to slugify.
+
+    Returns:
+        str: Slugified string.
+    """
     slug = re.sub(r"[^\w\s-]", "", normalize("NFKC", target).lower())
     return re.sub(r"[-\s]+", "-", slug).strip("-_")
 

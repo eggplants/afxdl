@@ -1,3 +1,5 @@
+"""Parser module for the Aphex Twin's discography from the website."""
+
 from __future__ import annotations
 
 import locale
@@ -13,15 +15,27 @@ from .models import Album, Track, Tracklist
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    import requests
+    from requests import Session
 
 # Change locale temporary for parsing the release date. (e.g. "August 21, 2015")
 locale.setlocale(locale.LC_TIME, "en_US.UTF-8")
 
+# Base URL for the website.
 BASE_URL = "https://aphextwin.warp.net"
 
 
-def generate_albums(session: requests.Session) -> Generator[Album, None, None]:
+def generate_albums(session: Session) -> Generator[Album, None, None]:
+    """Fetch albums from the website.
+
+    Args:
+        session (Session): A requests session.
+
+    Yields:
+        Album: An album object.
+
+    Returns:
+        None: When there are no more albums to fetch.
+    """
     for idx, _ in enumerate(iter(int, 1)):
         albums = __get_albums_by_page(idx + 1, session)
         if albums is None:
@@ -32,8 +46,17 @@ def generate_albums(session: requests.Session) -> Generator[Album, None, None]:
 
 def __get_albums_by_page(
     page_idx: int,
-    session: requests.Session,
+    session: Session,
 ) -> list[Album] | None:
+    """Fetch albums from a specific page.
+
+    Args:
+        page_idx (int): The page index.
+        session (Session): A requests session.
+
+    Returns:
+        list[Album] | None: A list of albums or None if no more albums to fetch.
+    """
     bs = BeautifulSoup(
         session.get(f"{BASE_URL}/fragment/index/{page_idx}").text,
         "html.parser",
@@ -76,7 +99,16 @@ def __get_albums_by_page(
     return albums
 
 
-def __get_tracklists(album_id: str, session: requests.Session) -> list[Tracklist]:
+def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
+    """Fetch tracklists from an album.
+
+    Args:
+        album_id (str): The album ID.
+        session (Session): A requests session.
+
+    Returns:
+        list[Tracklist]: A list of tracklists.
+    """
     release_url = f"{BASE_URL}/release/{album_id}"
     # print(release_url)  # debug  # noqa: ERA001
     bs = BeautifulSoup(session.get(release_url).text, "html.parser")
