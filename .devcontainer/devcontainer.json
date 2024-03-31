@@ -28,19 +28,21 @@
         "ms-azuretools.vscode-docker",
         "ms-python.black-formatter",
         "ms-python.mypy-type-checker",
+        "njpwerner.autodocstring",
         "oderwat.indent-rainbow",
         "tamasfe.even-better-toml",
         "tekumara.typos-vscode",
-        "timonwong.shellcheck"
+        "timonwong.shellcheck",
+        "-ms-python.vscode-pylance"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "zsh",
-        "shellformat.flag": "-s -l -i 2",
         "python.defaultInterpreterPath": "./.venv/bin/python",
         "[python]": {
           "editor.formatOnSave": true,
           "editor.codeActionsOnSave": {
-            "source.fixAll": "explicit"
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
           },
           "editor.defaultFormatter": "ms-python.black-formatter"
         }

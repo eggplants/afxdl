@@ -5,6 +5,7 @@ set -eux
 # create poetry venvdir under projectdir
 poetry config virtualenvs.in-project true
 poetry install
+poetry run pre-commit
 
 # Install typos cli
 curl -sLO https://raw.githubusercontent.com/crate-ci/gh-install/master/v1/install.sh
