@@ -32,7 +32,7 @@
 
 Download audio from <https://aphextwin.warp.net>
 
-_Note: Redistribution of downloaded image data is prohibited. Please keep it to private use._
+_Note: Redistribution of downloaded data is prohibited. Please keep it to private use._
 
 ## Install
 
