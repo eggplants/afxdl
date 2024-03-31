@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "afxdl"
-version = "0.1.1"
+version = "0.1.2"
 description = "Download audio from aphextwin.warp.net"
 authors = ["eggplants <w10776e8w@yahoo.co.jp>"]
 license = "MIT"
@@ -20,7 +20,6 @@ classifiers = [
   "Environment :: Console",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
-  "Python :: Implementation :: CPython",
   "Topic :: Multimedia :: Sound/Audio",
   "Typing :: Typed",
 ]
@@ -45,7 +44,9 @@ mypy = "^1.9.0"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core"]
+requires = [
+  "poetry-core",
+]
 
 [tool.poetry.scripts]
 afxdl = "afxdl.main:main"
