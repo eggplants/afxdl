@@ -23,9 +23,9 @@
 )
 
 [![ghcr latest](
-  <https://ghcr-badge.deta.dev/eggplants/afxdl/latest_tag?trim=major&label=latest>
+  <https://ghcr-badge.egpl.dev/eggplants/afxdl/latest_tag?trim=major&label=latest>
  ) ![ghcr size](
-  <https://ghcr-badge.deta.dev/eggplants/afxdl/size>
+  <https://ghcr-badge.egpl.dev/eggplants/afxdl/size>
 )](
   <https://github.com/eggplants/afxdl/pkgs/container/afxdl>
 )
