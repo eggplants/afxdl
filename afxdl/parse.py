@@ -36,29 +36,25 @@ def generate_albums(session: Session) -> Generator[Album, None, None]:
     Returns:
         None: When there are no more albums to fetch.
     """
-    for idx, _ in enumerate(iter(int, 1)):
-        albums = __get_albums_by_page(idx + 1, session)
-        if albums is None:
-            break
+    albums = __get_albums(session)
+    if albums:
         yield from albums
     return None
 
 
-def __get_albums_by_page(
-    page_idx: int,
+def __get_albums(
     session: Session,
 ) -> list[Album] | None:
     """Fetch albums from a specific page.
 
     Args:
-        page_idx (int): The page index.
         session (Session): A requests session.
 
     Returns:
         list[Album] | None: A list of albums or None if no more albums to fetch.
     """
     bs = BeautifulSoup(
-        session.get(f"{BASE_URL}/fragment/index/{page_idx}").text,
+        session.get(f"{BASE_URL}/vinyl-cd").text,
         "html.parser",
     )
     albums: list[Album] = []
@@ -77,7 +73,7 @@ def __get_albums_by_page(
             class_="product-release-date product-release-date-past",
         ).text.strip()
         release_date = (
-            datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=timezone.utc).date()
+            datetime.strptime(date_str, "%d %B %Y").replace(tzinfo=timezone.utc).date()
         )
         catalog_number_elm = product_elm.find("dd", class_="catalogue-number")
         albums.append(
