@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date  # noqa: TCH003
+from datetime import date  # noqa: TC003
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -48,6 +48,6 @@ class Album(StrictBaseModel):
 
 __all__ = (
     "Album",
-    "Tracklist",
     "Track",
+    "Tracklist",
 )
