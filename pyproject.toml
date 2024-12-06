@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "afxdl"
-version = "0.2.0"
+version = "0.2.1"
 description = "Download audio from aphextwin.warp.net"
 authors = [
   "eggplants <w10776e8w@yahoo.co.jp>",
