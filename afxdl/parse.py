@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup
-from pydantic_core import Url
+from pydantic import HttpUrl
 
 from .models import Album, Track, Tracklist
 
@@ -135,8 +135,8 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
                         item_elm.find("h3", class_="actions-track-name")
                         or item_elm.find("span", itemprop=True)
                     ).text.strip(),
-                    page_url=Url(f"{release_url}#track-{track_id}"),
-                    trial_url=Url(session.get(resolve_url).text.strip()),
+                    page_url=HttpUrl(f"{release_url}#track-{track_id}"),
+                    trial_url=HttpUrl(session.get(resolve_url).text.strip()),
                     number=item_number,
                     duration=item_elm.find(
                         "span",
