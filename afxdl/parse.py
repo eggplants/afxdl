@@ -36,25 +36,29 @@ def generate_albums(session: Session) -> Generator[Album, None, None]:
     Returns:
         None: When there are no more albums to fetch.
     """
-    albums = __get_albums(session)
-    if albums:
+    for idx, _ in enumerate(iter(int, 1)):
+        albums = __get_albums_by_page(idx + 1, session)
+        if albums is None:
+            break
         yield from albums
     return None
 
 
-def __get_albums(
+def __get_albums_by_page(
+    page_idx: int,
     session: Session,
 ) -> list[Album] | None:
     """Fetch albums from a specific page.
 
     Args:
+        page_idx (int): The page index.
         session (Session): A requests session.
 
     Returns:
         list[Album] | None: A list of albums or None if no more albums to fetch.
     """
     bs = BeautifulSoup(
-        session.get(f"{BASE_URL}/vinyl-cd").text,
+        session.get(f"{BASE_URL}/fragment/releases/{page_idx}").text,
         "html.parser",
     )
     albums: list[Album] = []
