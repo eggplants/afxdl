@@ -119,7 +119,7 @@ def __save_track(
 
     audio = MutagenFile(audio_path, easy=True)
 
-    if not isinstance(audio, (EasyID3, EasyMP3)):
+    if not isinstance(audio, EasyID3 | EasyMP3):
         msg = f"Failed to load audio file: {audio_path}"
         raise TypeError(msg)
     if type(audio) is EasyMP3:

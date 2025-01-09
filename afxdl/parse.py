@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import locale
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -77,7 +77,7 @@ def __get_albums_by_page(
             class_="product-release-date product-release-date-past",
         ).text.strip()
         release_date = (
-            datetime.strptime(date_str, "%d %B %Y").replace(tzinfo=timezone.utc).date()
+            datetime.strptime(date_str, "%d %B %Y").replace(tzinfo=UTC).date()
         )
         catalog_number_elm = product_elm.find("dd", class_="catalogue-number")
         albums.append(
