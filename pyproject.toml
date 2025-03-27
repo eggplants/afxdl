@@ -1,12 +1,9 @@
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = [
-  "poetry-core>=2",
-]
+build-backend = "hatchling.build"
+requires = [ "hatchling", "uv-dynamic-versioning" ]
 
 [project]
 name = "afxdl"
-version = "0.2.1"
 description = "Download audio from aphextwin.warp.net"
 readme = "README.md"
 keywords = [
@@ -19,9 +16,7 @@ keywords = [
   "warp",
 ]
 license = { text = "MIT" }
-authors = [
-  { name = "eggplants", email = "w10776e8w@yahoo.co.jp" },
-]
+authors = [ { name = "eggplants", email = "w10776e8w@yahoo.co.jp" } ]
 requires-python = ">=3.12,<4"
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -33,41 +28,42 @@ classifiers = [
   "Topic :: Multimedia :: Sound/Audio",
   "Typing :: Typed",
 ]
+dynamic = [ "version" ]
 dependencies = [
   "beautifulsoup4>=4.12.3,<5",
   "mutagen>=1.47,<2",
   "pydantic>=2.10.5,<3",
   "requests>=2.32.3,<3",
 ]
+
 urls.Repository = "https://github.com/eggplants/afxdl"
 scripts.afxdl = "afxdl.main:main"
 
-[tool.poetry]
-requires-poetry = ">=2.0"
-packages = [
-  { include = "afxdl" },
+[dependency-groups]
+dev = [
+  "mypy>=1.9,<2",
+  "pre-commit>=3.7,<5",
+  "pytest>=8.1.1,<9",
+  "pytest-cov>=5,<7",
+  "ruff>=0.5,<0.9",
+  "taskipy>=1.12.2,<2",
+  "types-beautifulsoup4>=4.12.0.20240229,<5",
+  "types-requests>=2.31.0.20240311,<3",
 ]
+docs = [ "pdoc" ]
 
-[tool.poetry.group.dev.dependencies]
-pre-commit = ">=3.7,<5.0"
-pytest = "^8.1.1"
-pytest-cov = ">=5,<7"
-taskipy = "^1.12.2"
-black = "^24.3.0"
-ruff = ">=0.5.0,<0.9.0"
-types-beautifulsoup4 = "^4.12.0.20240229"
-types-requests = "^2.31.0.20240311"
-mypy = "^1.9.0"
+[tool.hatch.version]
+# tool.hatch.version.source is not listed in official schema.
+# https://github.com/ninoseki/uv-dynamic-versioning/issues/21
+source = "uv-dynamic-versioning"
 
-[tool.poetry.requires-plugins]
-poetry-plugin-shell = ">=1.0"
-
-[tool.black]
-target-version = [
-  "py312",
-]
+[tool.hatch.build.targets.sdist]
+sdist.include = [ "afxdl" ]
+wheel.include = [ "afxdl" ]
 
 [tool.ruff]
+format.indent-style = "space"
+format.quote-style = "double"
 lint.select = [
   "ALL",
 ]
@@ -110,6 +106,16 @@ plugins = [
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
 
+[tool.uv]
+default-groups = [
+  "dev",
+  "docs",
+]
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "semver"
+
 [tool.pydantic-mypy]
 # frozen = true
 init_forbid_extra = true
@@ -122,3 +128,4 @@ test = "pytest --cov=afxdl --cov-report=term"
 "test:ci" = "task test --cov-report=xml:cov.xml"
 lint = "pre-commit run -a"
 profile = "python -m cProfile"
+gendoc = "pdoc afxdl -o ./docs"

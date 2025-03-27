@@ -5,17 +5,17 @@
   )](
   <https://badge.fury.io/py/afxdl>
 ) [![Maintainability](
-  <https://api.codeclimate.com/v1/badges/61cf398cfd4818652b13/maintainability>
+  <https://qlty.sh/badges/40b9ccb5-5c3b-4da1-8d07-1f2be459f004/maintainability.svg>
   )](
-  <https://codeclimate.com/github/eggplants/afxdl/maintainability>
+  <https://qlty.sh/gh/eggplants/projects/afxdl>
 ) [![pre-commit.ci status](
   <https://results.pre-commit.ci/badge/github/eggplants/afxdl/master.svg>
   )](
   <https://results.pre-commit.ci/latest/github/eggplants/afxdl/master>
-) [![Test Coverage](
-  <https://api.codeclimate.com/v1/badges/61cf398cfd4818652b13/test_coverage>
+) [![Code Coverage](
+  <https://qlty.sh/badges/40b9ccb5-5c3b-4da1-8d07-1f2be459f004/test_coverage.svg>
   )](
-  <https://codeclimate.com/github/eggplants/afxdl/test_coverage>
+  <https://qlty.sh/gh/eggplants/projects/afxdl>
 ) [![Test](
   <https://github.com/eggplants/afxdl/actions/workflows/test.yml/badge.svg>
   )](

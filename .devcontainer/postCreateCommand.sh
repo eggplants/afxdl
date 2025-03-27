@@ -1,13 +1,15 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
-set -eux
+set -euxo pipefail
 
-# create poetry venvdir under projectdir
-poetry config virtualenvs.in-project true
-poetry install
-poetry run pre-commit
+uv generate-shell-completion zsh
+uv sync --dev --all-extras
+uv run pre-commit install --allow-missing-config
 
-# Install typos cli
-curl -sLO https://raw.githubusercontent.com/crate-ci/gh-install/master/v1/install.sh
-sh install.sh -s -- --git crate-ci/typos --to ~/.local/bin --target x86_64-unknown-linux-musl
-rm install.sh
+cat<<'A'>> ~/.zshrc
+. .venv/bin/activate
+A
+
+sed -i ~/.zshrc -e 's/^ZSH_THEME=.*/ZSH_THEME="refined"/'
+
+[[ -d .venv ]] || uv venv
