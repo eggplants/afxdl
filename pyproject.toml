@@ -25,6 +25,7 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Multimedia :: Sound/Audio",
   "Typing :: Typed",
 ]
@@ -60,6 +61,12 @@ source = "uv-dynamic-versioning"
 [tool.hatch.build.targets.sdist]
 sdist.include = [ "afxdl" ]
 wheel.include = [ "afxdl" ]
+
+[tool.uv]
+default-groups = [
+  "dev",
+  "docs",
+]
 
 [tool.ruff]
 format.indent-style = "space"
@@ -105,12 +112,6 @@ plugins = [
 [tool.pyright]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
-
-[tool.uv]
-default-groups = [
-  "dev",
-  "docs",
-]
 
 [tool.uv-dynamic-versioning]
 vcs = "git"
