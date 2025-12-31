@@ -4,22 +4,10 @@
   <https://badge.fury.io/py/afxdl.svg>
   )](
   <https://badge.fury.io/py/afxdl>
-) [![Maintainability](
-  <https://qlty.sh/badges/40b9ccb5-5c3b-4da1-8d07-1f2be459f004/maintainability.svg>
+) [![CI](
+  <https://github.com/eggplants/afxdl/actions/workflows/ci.yml/badge.svg>
   )](
-  <https://qlty.sh/gh/eggplants/projects/afxdl>
-) [![pre-commit.ci status](
-  <https://results.pre-commit.ci/badge/github/eggplants/afxdl/master.svg>
-  )](
-  <https://results.pre-commit.ci/latest/github/eggplants/afxdl/master>
-) [![Code Coverage](
-  <https://qlty.sh/badges/40b9ccb5-5c3b-4da1-8d07-1f2be459f004/test_coverage.svg>
-  )](
-  <https://qlty.sh/gh/eggplants/projects/afxdl>
-) [![Test](
-  <https://github.com/eggplants/afxdl/actions/workflows/test.yml/badge.svg>
-  )](
-  <https://github.com/eggplants/afxdl/actions/workflows/test.yml>
+  <https://github.com/eggplants/afxdl/actions/workflows/ci.yml>
 )
 
 [![ghcr latest](
@@ -38,11 +26,7 @@ _Note: Redistribution of downloaded data is prohibited. Please keep it to privat
 
 ```bash
 pip install afxdl
-```
-
-OR:
-
-```bash
+# OR:
 pipx install afxdl
 ```
 
@@ -77,7 +61,7 @@ $ tree ~/Music/AphexTwin/
 
 ```shellsession
 $ afxdl -h
-usage: afxdl [-h] [-o] [-V] [save_dir]
+usage: afxdl [-h] [-o] [-d] [-V] [save_dir]
 
 download audio from <aphextwin.warp.net>
 
@@ -87,5 +71,6 @@ positional arguments:
 options:
   -h, --help       show this help message and exit
   -o, --overwrite  overwrite saved albums (default: False)
+  -d, --dry        dry run mode (skip downloading and saving) (default: False)
   -V, --version    show program's version number and exit
 ```

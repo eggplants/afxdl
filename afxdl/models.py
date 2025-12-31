@@ -7,14 +7,7 @@ from datetime import date  # noqa: TC003
 from pydantic import BaseModel, Field, HttpUrl
 
 
-class StrictBaseModel(BaseModel):
-    """Strict base model."""
-
-    class Config:
-        validate_assignment = True
-
-
-class Track(StrictBaseModel):
+class Track(BaseModel, validate_assignment=True):
     """Track model."""
 
     track_id: str = Field(..., min_length=6, max_length=7, pattern=r"^\d{6,7}$")
@@ -26,14 +19,14 @@ class Track(StrictBaseModel):
     trial_url: HttpUrl
 
 
-class Tracklist(StrictBaseModel):
+class Tracklist(BaseModel, validate_assignment=True):
     """Tracklist model."""
 
     tracks: tuple[Track, ...] = Field(..., min_length=1)
     number: int = Field(..., gt=0)
 
 
-class Album(StrictBaseModel):
+class Album(BaseModel, validate_assignment=True):
     """Album model."""
 
     album_id: str = Field(..., min_length=5, max_length=6, pattern=r"^\d{5,6}$")

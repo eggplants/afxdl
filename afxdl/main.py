@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from os import get_terminal_size
 from pathlib import Path
+from shutil import get_terminal_size
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -56,7 +56,7 @@ def __parse_args(test_args: list[str] | None = None) -> argparse.Namespace:
         formatter_class=(
             lambda prog: CustomFormatter(
                 prog,
-                width=get_terminal_size().columns,
+                width=get_terminal_size(fallback=(120, 50)).columns,
             )
         ),
     )
@@ -72,6 +72,12 @@ def __parse_args(test_args: list[str] | None = None) -> argparse.Namespace:
         "--overwrite",
         action="store_true",
         help="overwrite saved albums",
+    )
+    parser.add_argument(
+        "-d",
+        "--dry",
+        action="store_true",
+        help="dry run mode (skip downloading and saving)",
     )
     parser.add_argument(
         "-V",
@@ -123,8 +129,11 @@ def main(test_args: list[str] | None = None) -> None:
                 session,
                 save_dir=args.save_dir,
                 overwrite=bool(args.overwrite),
+                dry=bool(args.dry),
             )
-            if album_dir:
+            if args.dry:
+                print("[!] Skipped in dry run mode.")
+            elif album_dir:
                 print(f"[+] Saved: {str(album_dir)!r}")
             else:
                 print("[!] Skipped since album already exists. (use `-o` to overwrite)")

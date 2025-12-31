@@ -1,17 +1,18 @@
-FROM python:3
+FROM python:3.14-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
-ARG VERSION
-ENV VERSION ${VERSION:-master}
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-LABEL maintainer="eggplants <w10776e8w@yahoo.co.jp>"
-LABEL description="Download audio from aphextwin.warp.net"
+COPY . /app
 
-RUN useradd --create-home appuser
-WORKDIR /home/appuser
-USER appuser
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_NO_DEV=1
+ENV PYTHONUNBUFFERED=1
 
-RUN pip install --upgrade pip
+WORKDIR /app
+RUN uv sync --locked --no-dev
 
-RUN python -m pip install git+https://github.com/eggplants/afxdl@${VERSION}
+ENV PATH="/app/.venv/bin:$PATH"
 
-ENTRYPOINT ["afxdl"]
+CMD ["uv", "run", "afxdl"]

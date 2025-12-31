@@ -1,0 +1,63 @@
+{
+  "language": "en_US",
+  "words": [
+    "afxdl",
+    "albumartist",
+    "Anson",
+    "Aphex",
+    "aphextwin",
+    "APIC",
+    "asyncio",
+    "beautifulsoup",
+    "blackbox",
+    "capfd",
+    "catalognumber",
+    "charliermarsh",
+    "cooldown",
+    "discnumber",
+    "dryrun",
+    "durichroma",
+    "easyid",
+    "forcelist",
+    "gruntfuggly",
+    "hverlin",
+    "itemprop",
+    "KHTML",
+    "originaldate",
+    "pdoc",
+    "peaceiris",
+    "pipefail",
+    "pipx",
+    "pthex",
+    "pydantic",
+    "pydocstyle",
+    "pymarkdownlnt",
+    "pyproject",
+    "pyted",
+    "pytest",
+    "PYTHONUNBUFFERED",
+    "sdist",
+    "shellsession",
+    "Slugified",
+    "tombi",
+    "Tracklist",
+    "tracklists",
+    "tracknumber",
+    "venv"
+  ],
+  "dictionaries": [
+    "companies",
+    "markdown",
+    "misc",
+    "softwareTerms",
+    "useCompounds"
+  ],
+  "ignorePaths": [
+    ".gitignore",
+    ".cspell.json"
+  ],
+  "features": {
+    "weighted-suggestions": true
+  },
+  "useGitignore": true
+}

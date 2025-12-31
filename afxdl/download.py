@@ -42,6 +42,7 @@ def download(
     *,
     save_dir: Path,
     overwrite: bool = False,
+    dry: bool = False,
 ) -> Path | None:
     """Download tracks by using album data.
 
@@ -50,6 +51,7 @@ def download(
         session (Session): Session object for downloading.
         save_dir (Path): Directory to save albums.
         overwrite (bool): Overwrite saved albums. Defaults to False.
+        dry(bool): Dry run mode (skip downloading and saving). Defaults to False.
 
     Returns:
         Path | None: Path to saved album directory or None if album is already saved.
@@ -57,6 +59,9 @@ def download(
     album_dir = save_dir / __slugify(f"{album.album_id}-{album.title}")
     if album_dir.exists() and not overwrite:
         return None
+
+    if dry:
+        return album_dir
 
     album_dir.mkdir(parents=True, exist_ok=True)
     for metadata in __generate_track_metadata(album):

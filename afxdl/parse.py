@@ -72,6 +72,8 @@ def __get_albums_by_page(
         if len(tracklists) < 1:
             continue
         img = product_elm.img
+        if img is None:
+            continue
         date_str = product_elm.find(
             "dd",
             class_="product-release-date product-release-date-past",
@@ -83,9 +85,9 @@ def __get_albums_by_page(
         albums.append(
             Album(
                 album_id=album_id,
-                page_url=BASE_URL + href,
-                title=img.get("alt", "").strip(),
-                cover_url=img.get("src", ""),
+                page_url=HttpUrl(BASE_URL + href),
+                title=str(img.get("alt", "")).strip(),
+                cover_url=HttpUrl(str(img.get("src", ""))),
                 artist=product_elm.find("dd", class_="artist")
                 .find(class_="undecorated-link")
                 .text,
@@ -130,7 +132,7 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
             # print(resolve_url)  # debug  # noqa: ERA001
             tracks.append(
                 Track(
-                    track_id=track_id,
+                    track_id=str(track_id),
                     title=(
                         item_elm.find("h3", class_="actions-track-name")
                         or item_elm.find("span", itemprop=True)
