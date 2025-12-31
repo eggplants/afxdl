@@ -18,7 +18,14 @@ if TYPE_CHECKING:
     from requests import Session
 
 # Change locale temporary for parsing the release date. (e.g. "August 21, 2015")
-locale.setlocale(locale.LC_TIME, "en_US.UTF-8")
+try:
+    locale.setlocale(locale.LC_TIME, "en_US.UTF-8")
+except locale.Error:
+    # Fallback to C.UTF-8 or system default if en_US.UTF-8 is not available
+    try:
+        locale.setlocale(locale.LC_TIME, "C.UTF-8")
+    except locale.Error:
+        pass  # Use system default
 
 # Base URL for the website.
 BASE_URL = "https://aphextwin.warp.net"
