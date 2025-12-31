@@ -58,15 +58,9 @@ afxdl    </h1>
 
 <p><a href="https://badge.fury.io/py/afxdl
 "><img src="https://badge.fury.io/py/afxdl.svg
-  " alt="PyPI version" /></a> <a href="https://qlty.sh/gh/eggplants/projects/afxdl
-"><img src="https://qlty.sh/badges/40b9ccb5-5c3b-4da1-8d07-1f2be459f004/maintainability.svg
-  " alt="Maintainability" /></a> <a href="https://results.pre-commit.ci/latest/github/eggplants/afxdl/master
-"><img src="https://results.pre-commit.ci/badge/github/eggplants/afxdl/master.svg
-  " alt="pre-commit.ci status" /></a> <a href="https://qlty.sh/gh/eggplants/projects/afxdl
-"><img src="https://qlty.sh/badges/40b9ccb5-5c3b-4da1-8d07-1f2be459f004/test_coverage.svg
-  " alt="Code Coverage" /></a> <a href="https://github.com/eggplants/afxdl/actions/workflows/test.yml
-"><img src="https://github.com/eggplants/afxdl/actions/workflows/test.yml/badge.svg
-  " alt="Test" /></a></p>
+  " alt="PyPI version" /></a> <a href="https://github.com/eggplants/afxdl/actions/workflows/ci.yml
+"><img src="https://github.com/eggplants/afxdl/actions/workflows/ci.yml/badge.svg
+  " alt="CI" /></a></p>
 
 <p><a href="https://github.com/eggplants/afxdl/pkgs/container/afxdl
 "><img src="https://ghcr-badge.egpl.dev/eggplants/afxdl/latest_tag?trim=major&label=latest
@@ -81,13 +75,8 @@ afxdl    </h1>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>afxdl
-</code></pre>
-</div>
-
-<p>OR:</p>
-
-<div class="pdoc-code codehilite">
-<pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span>afxdl
+<span class="c1"># OR:</span>
+pipx<span class="w"> </span>install<span class="w"> </span>afxdl
 </code></pre>
 </div>
 
@@ -120,7 +109,7 @@ $ tree ~/Music/AphexTwin/
 <h2 id="help">Help</h2>
 
 <pre><code>$ afxdl -h
-usage: afxdl [-h] [-o] [-V] [save_dir]
+usage: afxdl [-h] [-o] [-d] [-V] [save_dir]
 
 download audio from &lt;aphextwin.warp.net&gt;
 
@@ -130,6 +119,7 @@ positional arguments:
 options:
   -h, --help       show this help message and exit
   -o, --overwrite  overwrite saved albums (default: False)
+  -d, --dry        dry run mode (skip downloading and saving) (default: False)
   -V, --version    show program's version number and exit
 </code></pre>
 </div>
