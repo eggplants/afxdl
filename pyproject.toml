@@ -15,7 +15,7 @@ keywords = [
   "mp3",
   "warp",
 ]
-license = { text = "MIT" }
+license = "MIT"
 authors = [ { name = "eggplants", email = "w10776e8w@yahoo.co.jp" } ]
 requires-python = ">=3.12,<4"
 classifiers = [
@@ -36,7 +36,6 @@ dependencies = [
   "pydantic>=2.10.5,<3",
   "requests>=2.32.3,<3",
 ]
-
 urls.Repository = "https://github.com/eggplants/afxdl"
 scripts.afxdl = "afxdl.main:main"
 
@@ -52,22 +51,19 @@ docs = [
   "pdoc>=16",
 ]
 
-[tool.hatch.version]
-source = "uv-dynamic-versioning"
-
-[tool.hatch.build.targets.sdist]
-include = [ "afxdl" ]
-
-[tool.hatch.build.targets.wheel]
-include = [ "afxdl" ]
+[tool.hatch]
+build.targets.sdist.include = [ "afxdl" ]
+build.targets.wheel.include = [ "afxdl" ]
+version.source = "uv-dynamic-versioning"
 
 [tool.uv]
-preview = true
+python-downloads = "never"
 default-groups = [
   "dev",
   "docs",
 ]
 exclude-newer = "P7D"
+preview = true
 
 [tool.ruff]
 format.indent-style = "space"

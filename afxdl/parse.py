@@ -73,7 +73,9 @@ def __get_albums_by_page(
     if len(product_elms) < 1:
         return None
     for product_elm in product_elms:
-        href = product_elm.find("a", class_="main-product-image").get("href", "")
+        a_tag = product_elm.find("a", class_="main-product-image")
+        assert a_tag is not None
+        href = str(a_tag.get("href", ""))
         album_id = Path(href).name.split("-")[0]
         tracklists = tuple(__get_tracklists(album_id, session))
         if len(tracklists) < 1:
@@ -81,23 +83,27 @@ def __get_albums_by_page(
         img = product_elm.img
         if img is None:
             continue
-        date_str = product_elm.find(
+        date_tag = product_elm.find(
             "dd",
             class_="product-release-date product-release-date-past",
-        ).text.strip()
+        )
+        assert date_tag is not None
+        date_str = date_tag.text.strip()
         release_date = (
             datetime.strptime(date_str, "%d %B %Y").replace(tzinfo=UTC).date()
         )
         catalog_number_elm = product_elm.find("dd", class_="catalogue-number")
+        artist_dd = product_elm.find("dd", class_="artist")
+        assert artist_dd is not None
+        artist_tag = artist_dd.find(class_="undecorated-link")
+        assert artist_tag is not None
         albums.append(
             Album(
                 album_id=album_id,
                 page_url=HttpUrl(BASE_URL + href),
                 title=str(img.get("alt", "")).strip(),
                 cover_url=HttpUrl(str(img.get("src", ""))),
-                artist=product_elm.find("dd", class_="artist")
-                .find(class_="undecorated-link")
-                .text,
+                artist=artist_tag.text,
                 release_date=release_date,
                 catalog_number=(
                     catalog_number_elm.text.strip() if catalog_number_elm else None
@@ -137,20 +143,20 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
                 f"{BASE_URL}/player/resolve/{album_id}-{list_number}-{item_number}"
             )
             # print(resolve_url)  # debug  # noqa: ERA001
+            title_tag = item_elm.find(
+                "h3", class_="actions-track-name"
+            ) or item_elm.find("span", itemprop=True)
+            assert title_tag is not None
+            duration_tag = item_elm.find("span", class_="track-duration")
+            assert duration_tag is not None
             tracks.append(
                 Track(
                     track_id=str(track_id),
-                    title=(
-                        item_elm.find("h3", class_="actions-track-name")
-                        or item_elm.find("span", itemprop=True)
-                    ).text.strip(),
+                    title=title_tag.text.strip(),
                     page_url=HttpUrl(f"{release_url}#track-{track_id}"),
                     trial_url=HttpUrl(session.get(resolve_url).text.strip()),
                     number=item_number,
-                    duration=item_elm.find(
-                        "span",
-                        class_="track-duration",
-                    ).text.strip(),
+                    duration=duration_tag.text.strip(),
                     description=item_elm.p.text if item_elm.p else None,
                 ),
             )
