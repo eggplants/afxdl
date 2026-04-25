@@ -79,6 +79,9 @@ lint.ignore = [
 lint.per-file-ignores."main.py" = [
   "T201", # `print` found
 ]
+lint.per-file-ignores."parse.py" = [
+  "S101", # Use of assert detected
+]
 lint.per-file-ignores."tests/*.py" = [
   "D",
   "S101", # Use of assert detected

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import locale
 from datetime import UTC, datetime
 from pathlib import Path
@@ -22,10 +23,8 @@ try:
     locale.setlocale(locale.LC_TIME, "en_US.UTF-8")
 except locale.Error:
     # Fallback to C.UTF-8 or system default if en_US.UTF-8 is not available
-    try:
+    with contextlib.suppress(locale.Error):
         locale.setlocale(locale.LC_TIME, "C.UTF-8")
-    except locale.Error:
-        pass  # Use system default
 
 # Base URL for the website.
 BASE_URL = "https://aphextwin.warp.net"
