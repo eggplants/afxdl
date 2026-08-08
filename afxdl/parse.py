@@ -153,14 +153,13 @@ def __get_albums_by_page(
         img = product_elm.img
         if img is None:
             continue
-        date_tag = product_elm.find(
-            "dd",
-            class_="product-release-date product-release-date-past",
-        )
+        # The element also carries a -past/-future modifier class; matching only
+        # the base class keeps unreleased (pre-order) titles working too.
+        date_tag = product_elm.find("dd", class_="product-release-date")
         assert date_tag is not None
         date_str = date_tag.text.strip()
         release_date = (
-            datetime.strptime(date_str, "%d %B %Y").replace(tzinfo=UTC).date()
+            datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=UTC).date()
         )
         catalog_number_elm = product_elm.find("dd", class_="catalogue-number")
         artist_dd = product_elm.find("dd", class_="artist")

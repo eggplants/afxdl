@@ -9,10 +9,31 @@ from shutil import get_terminal_size
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
+from wafsolver.fingerprint import USER_AGENT
 
 from . import __version__
 from .download import download
 from .parse import FetchError, generate_albums
+
+# AWS WAF serves an empty body unless the request looks like a real navigation,
+# so the challenge page is only readable with a full set of browser headers.
+# The user agent matches the one wafsolver reports in its fingerprint.
+BROWSER_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;q=0.9,"
+        "image/avif,image/webp,image/apng,*/*;q=0.8"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+    "sec-ch-ua": '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+}
 
 
 class CustomFormatter(
@@ -99,11 +120,7 @@ def main(test_args: list[str] | None = None) -> None:
     """
     args = __parse_args(test_args)
     with requests.Session() as session:
-        session.headers["User-Agent"] = (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/131.0.0.0 Safari/537.36"
-        )
+        session.headers.update(BROWSER_HEADERS)
         session.mount(
             "https://",
             HTTPAdapter(
