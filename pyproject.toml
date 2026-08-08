@@ -35,7 +35,7 @@ dependencies = [
   "mutagen>=1.47,<2",
   "pydantic>=2.10.5,<3",
   "requests>=2.32.3,<3",
-  "wafsolver<1",
+  "wafsolver>=0.0.1",
 ]
 urls.Repository = "https://github.com/eggplants/afxdl"
 scripts.afxdl = "afxdl.main:main"
@@ -64,9 +64,7 @@ default-groups = [
   "docs",
 ]
 exclude-newer = "P7D"
-# wafsolver was only just published, so the 7 day window would filter it out.
-# This override can be dropped once a release is older than that window.
-exclude-newer-package.wafsolver = "2026-08-09T00:00:00Z"
+exclude-newer-package.wafsolver = "2026-08-10T00:00:00Z"
 preview = true
 
 [tool.ruff]

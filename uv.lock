@@ -7,7 +7,7 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-wafsolver = "2026-08-09T00:00:00Z"
+wafsolver = "2026-08-10T00:00:00Z"
 
 [[package]]
 name = "afxdl"
@@ -1072,15 +1072,15 @@ wheels = [
 
 [[package]]
 name = "wafsolver"
-version = "0.0.0"
+version = "0.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "curl-cffi" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2e/42/ddea4b2f3ea3b95aa75db74d00eec3ed33897a4925a246a8805a3349357f/wafsolver-0.0.0.tar.gz", hash = "sha256:e3e05ac0d0b4c449a1b42e5f00c7f25ccd27ff75269fb8ddcf196d21125ebbf2", size = 11760, upload-time = "2026-08-08T08:57:14.068Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/39/be/2a9f5a2acb474d22bf5e8523cad4ca0c935a932afaf336de7028ca70d3b8/wafsolver-0.0.1.tar.gz", hash = "sha256:34c7892af5b0a23a0144cade049d502857bbbfc06ec8c9cd2dd0cf103631c494", size = 11960, upload-time = "2026-08-08T09:22:29.696Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/4f/16490827a85622655ec906731303864e4122835c1ac6fc4ee8531e1dbb78/wafsolver-0.0.0-py3-none-any.whl", hash = "sha256:68cbafb0c482b7a891d2b1494bd547b1c46caf1b2ee9e43d5458d0a0ef150559", size = 12416, upload-time = "2026-08-08T08:57:13.153Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/64/560b9a8f180dd4a680be471f4e8a9942de6d4043e399f170a2c274e3c259/wafsolver-0.0.1-py3-none-any.whl", hash = "sha256:0ce921636d40254633cfedb81a6e77373944b219e90d319e197828923df4a812", size = 12626, upload-time = "2026-08-08T09:22:28.828Z" },
 ]
 
 [[package]]
