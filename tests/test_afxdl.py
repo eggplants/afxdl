@@ -13,7 +13,7 @@ from wafsolver import TOKEN_COOKIE, WafSolveError
 from afxdl import __version__
 from afxdl.main import main
 from afxdl.models import Album, Track, Tracklist
-from afxdl.parse import FetchError, generate_albums
+from afxdl.parse import BASE_URL, FetchError, generate_albums, resolve_trial_url
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -287,6 +287,95 @@ def test_generate_albums_reports_unsolvable_challenge() -> None:
         pytest.raises(FetchError, match="nope"),
     ):
         next(generate_albums(session))
+
+
+RELEASE_LIST_HTML = """
+<ul>
+  <li class="product">
+    <a class="main-product-image" href="/release/12345-test-album"></a>
+    <img alt="Test Album" src="https://example.com/cover.jpg">
+    <dd class="product-release-date">August 21, 2015</dd>
+    <dd class="catalogue-number">TEST001</dd>
+    <dd class="artist"><span class="undecorated-link">Aphex Twin</span></dd>
+  </li>
+  <li class="product">
+    <a class="main-product-image" href="/release/67890-test-album-2"></a>
+    <img alt="Test Album 2" src="https://example.com/cover2.jpg">
+    <dd class="product-release-date">August 22, 2015</dd>
+    <dd class="catalogue-number">TEST002</dd>
+    <dd class="artist"><span class="undecorated-link">Aphex Twin</span></dd>
+  </li>
+</ul>
+"""
+
+RELEASE_HTML = """
+<div id="track-list-1">
+  <ol class="track-list">
+    <li class="track player-aware" data-id="123456">
+      <h3 class="actions-track-name">Track One</h3>
+      <span class="track-duration">3:45</span>
+    </li>
+  </ol>
+</div>
+"""
+
+
+def _recording_session(urls: list[str]) -> Mock:
+    """Build a session mock that serves the fixtures above and records URLs."""
+
+    def get(url: str) -> Mock:
+        urls.append(url)
+        if url == f"{BASE_URL}/fragment/releases/1":
+            text = RELEASE_LIST_HTML
+        elif url.startswith(f"{BASE_URL}/release/"):
+            text = RELEASE_HTML
+        else:
+            text = "<html></html>"
+        return Mock(headers={}, ok=True, status_code=200, text=text)
+
+    session = Mock()
+    session.get.side_effect = get
+    return session
+
+
+def test_generate_albums_fetches_tracklists_lazily() -> None:
+    """Test that only the yielded album's tracklist is fetched."""
+    urls: list[str] = []
+    messages: list[str] = []
+    generator = generate_albums(_recording_session(urls), progress=messages.append)
+
+    album = next(generator)
+
+    assert album.title == "Test Album"
+    assert album.album_id == "12345"
+    # The second album's release page is untouched, and no /player/resolve/
+    # request is made while parsing.
+    assert urls == [
+        f"{BASE_URL}/fragment/releases/1",
+        f"{BASE_URL}/release/12345",
+    ]
+    assert album.tracklists[0].tracks[0].trial_url is None
+    assert any("Fetching release list" in message for message in messages)
+    assert any("Test Album" in message for message in messages)
+
+    assert next(generator).title == "Test Album 2"
+    assert urls[-1] == f"{BASE_URL}/release/67890"
+
+
+def test_resolve_trial_url() -> None:
+    """Test that the audio URL is resolved from the disc and track numbers."""
+    session = Mock()
+    session.get.return_value = Mock(
+        headers={},
+        ok=True,
+        status_code=200,
+        text="https://example.com/audio.mp3\n",
+    )
+
+    url = resolve_trial_url("12345", 2, 3, session)
+
+    assert str(url) == "https://example.com/audio.mp3"
+    session.get.assert_called_once_with(f"{BASE_URL}/player/resolve/12345-2-3")
 
 
 def test_track_model_validation(sample_track: Track) -> None:

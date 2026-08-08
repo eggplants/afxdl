@@ -17,6 +17,9 @@ from mutagen.id3._frames import APIC, COMM
 from mutagen.id3._util import error as MutagenUtilError  # noqa: N812
 from mutagen.mp3 import EasyMP3
 
+from .parse import resolve_trial_url
+from .progress import noop_progress
+
 if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
@@ -24,6 +27,7 @@ if TYPE_CHECKING:
     from requests import Session
 
     from .models import Album, Track, Tracklist
+    from .progress import ProgressCallback
 
 
 class Metadata(NamedTuple):
@@ -36,13 +40,14 @@ class Metadata(NamedTuple):
     total_track: int
 
 
-def download(
+def download(  # noqa: PLR0913
     album: Album,
     session: Session,
     *,
     save_dir: Path,
     overwrite: bool = False,
     dry: bool = False,
+    progress: ProgressCallback = noop_progress,
 ) -> Path | None:
     """Download tracks by using album data.
 
@@ -52,6 +57,8 @@ def download(
         save_dir (Path): Directory to save albums.
         overwrite (bool): Overwrite saved albums. Defaults to False.
         dry(bool): Dry run mode (skip downloading and saving). Defaults to False.
+        progress (ProgressCallback): Called with a status line before each track.
+            Defaults to discarding the messages.
 
     Returns:
         Path | None: Path to saved album directory or None if album is already saved.
@@ -64,7 +71,11 @@ def download(
         return album_dir
 
     album_dir.mkdir(parents=True, exist_ok=True)
-    for metadata in __generate_track_metadata(album):
+    metadata_list = list(__generate_track_metadata(album))
+    for idx, metadata in enumerate(metadata_list, start=1):
+        progress(
+            f"Downloading {metadata.track.title!r} ({idx}/{len(metadata_list)})...",
+        )
         __save_track(album_dir, session, metadata)
     return album_dir
 
@@ -114,7 +125,13 @@ def __save_track(
         total_track,
     ) = metadata
 
-    res = session.get(str(track.trial_url))
+    trial_url = track.trial_url or resolve_trial_url(
+        album.album_id,
+        tracklist.number,
+        track.number,
+        session,
+    )
+    res = session.get(str(trial_url))
     if not res.ok or res.headers.get("Content-Type") != "audio/mpeg":
         raise ValueError
 

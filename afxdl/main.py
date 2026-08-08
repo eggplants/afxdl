@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 from shutil import get_terminal_size
+from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -41,6 +42,43 @@ class CustomFormatter(
     argparse.RawDescriptionHelpFormatter,
 ):
     """Custom formatter for argparse."""
+
+
+class VerboseRetry(Retry):
+    """Retry policy that announces every retry.
+
+    The backoff between retries grows up to a few minutes, which otherwise
+    looks like the program has hung.
+    """
+
+    def increment(self, *args: Any, **kwargs: Any) -> Retry:  # noqa: ANN401
+        """Report the upcoming backoff, then delegate to `Retry.increment`.
+
+        Args:
+            *args (Any): Positional arguments for `Retry.increment`.
+            **kwargs (Any): Keyword arguments for `Retry.increment`.
+
+        Returns:
+            Retry: The retry state for the next attempt.
+        """
+        retry = super().increment(*args, **kwargs)
+        last = retry.history[-1] if retry.history else None
+        reason = (last.error or f"HTTP {last.status}") if last else "unknown error"
+        print(
+            f"[!] Request failed ({reason}); "
+            f"retrying in {retry.get_backoff_time():.0f}s...",
+            file=sys.stderr,
+        )
+        return retry
+
+
+def __print_progress(message: str) -> None:
+    """Print a status line coming from the fetching or downloading step.
+
+    Args:
+        message (str): The message to print.
+    """
+    print(f"[-] {message}")
 
 
 def __dir_path(path_str: str) -> Path:
@@ -124,7 +162,7 @@ def main(test_args: list[str] | None = None) -> None:
         session.mount(
             "https://",
             HTTPAdapter(
-                max_retries=Retry(
+                max_retries=VerboseRetry(
                     total=5,
                     backoff_factor=10,
                     status_forcelist=[429, 500, 502, 503, 504],
@@ -132,10 +170,9 @@ def main(test_args: list[str] | None = None) -> None:
             ),
         )
 
-        album_generator = generate_albums(session)
+        album_generator = generate_albums(session, progress=__print_progress)
         for idx, _ in enumerate(iter(int, 1)):
             print(f"[λ] === {idx + 1:03} ===")
-            print("[-] Fetching album information...")
             try:
                 album = next(album_generator, True)
             except FetchError as err:
@@ -145,13 +182,13 @@ def main(test_args: list[str] | None = None) -> None:
                 break
             total_track = sum(len(tl.tracks) for tl in album.tracklists)
             print(f"[+] Found: {album.title!r} ({total_track} tracks)")
-            print("[-] Downloading albums...")
             album_dir = download(
                 album,
                 session,
                 save_dir=args.save_dir,
                 overwrite=bool(args.overwrite),
                 dry=bool(args.dry),
+                progress=__print_progress,
             )
             if args.dry:
                 print("[!] Skipped in dry run mode.")

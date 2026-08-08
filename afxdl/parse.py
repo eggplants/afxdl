@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import contextlib
 import locale
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
@@ -20,11 +20,14 @@ from wafsolver import (
 )
 
 from .models import Album, Track, Tracklist
+from .progress import noop_progress
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from requests import Response, Session
+
+    from .progress import ProgressCallback
 
 # Change locale temporary for parsing the release date. (e.g. "August 21, 2015")
 try:
@@ -40,6 +43,18 @@ BASE_URL = "https://aphextwin.warp.net"
 
 class FetchError(Exception):
     """Raised when the website does not return the expected content."""
+
+
+class _AlbumStub(NamedTuple):
+    """Album data taken from the release list, before its tracklists are known."""
+
+    album_id: str
+    page_url: str
+    title: str
+    cover_url: str
+    artist: str
+    release_date: date
+    catalog_number: str | None
 
 
 def __fetch(url: str, session: Session) -> Response:
@@ -101,11 +116,22 @@ def __solve_challenge(url: str, session: Session, challenge_html: str) -> Respon
     return session.get(url)
 
 
-def generate_albums(session: Session) -> Generator[Album, None, None]:
+def generate_albums(
+    session: Session,
+    *,
+    progress: ProgressCallback = noop_progress,
+) -> Generator[Album, None, None]:
     """Fetch albums from the website.
+
+    The release list only carries the album metadata, so each album needs one
+    more request for its tracklists. That request is made right before the
+    album is yielded rather than for the whole page at once, so the caller can
+    start downloading the first album without waiting for the last one.
 
     Args:
         session (Session): A requests session.
+        progress (ProgressCallback): Called with a status line before each
+            request. Defaults to discarding the messages.
 
     Yields:
         Album: An album object.
@@ -114,31 +140,54 @@ def generate_albums(session: Session) -> Generator[Album, None, None]:
         None: When there are no more albums to fetch.
     """
     for idx, _ in enumerate(iter(int, 1)):
-        albums = __get_albums_by_page(idx + 1, session)
-        if albums is None:
+        page_idx = idx + 1
+        progress(f"Fetching release list (page {page_idx})...")
+        stubs = __get_album_stubs_by_page(page_idx, session)
+        if stubs is None:
+            progress("No more releases.")
             break
-        yield from albums
+        progress(f"Found {len(stubs)} release(s) on page {page_idx}.")
+        for stub_idx, stub in enumerate(stubs, start=1):
+            progress(
+                f"Fetching tracklist of {stub.title!r} "
+                f"({stub_idx}/{len(stubs)} on page {page_idx})...",
+            )
+            tracklists = tuple(__get_tracklists(stub.album_id, session))
+            if len(tracklists) < 1:
+                progress(f"{stub.title!r} has no tracklist, skipping.")
+                continue
+            yield Album(
+                album_id=stub.album_id,
+                page_url=HttpUrl(BASE_URL + stub.page_url),
+                title=stub.title,
+                cover_url=HttpUrl(stub.cover_url),
+                artist=stub.artist,
+                release_date=stub.release_date,
+                catalog_number=stub.catalog_number,
+                tracklists=tracklists,
+            )
     return None
 
 
-def __get_albums_by_page(
+def __get_album_stubs_by_page(
     page_idx: int,
     session: Session,
-) -> list[Album] | None:
-    """Fetch albums from a specific page.
+) -> list[_AlbumStub] | None:
+    """Fetch the album metadata listed on a specific page.
 
     Args:
         page_idx (int): The page index.
         session (Session): A requests session.
 
     Returns:
-        list[Album] | None: A list of albums or None if no more albums to fetch.
+        list[_AlbumStub] | None: The albums on the page, or None if the page is
+            empty and there is nothing left to fetch.
     """
     bs = BeautifulSoup(
         __fetch(f"{BASE_URL}/fragment/releases/{page_idx}", session).text,
         "html.parser",
     )
-    albums: list[Album] = []
+    stubs: list[_AlbumStub] = []
     product_elms = bs.find_all("li", class_="product")
     if len(product_elms) < 1:
         return None
@@ -147,9 +196,6 @@ def __get_albums_by_page(
         assert a_tag is not None
         href = str(a_tag.get("href", ""))
         album_id = Path(href).name.split("-")[0]
-        tracklists = tuple(__get_tracklists(album_id, session))
-        if len(tracklists) < 1:
-            continue
         img = product_elm.img
         if img is None:
             continue
@@ -166,21 +212,20 @@ def __get_albums_by_page(
         assert artist_dd is not None
         artist_tag = artist_dd.find(class_="undecorated-link")
         assert artist_tag is not None
-        albums.append(
-            Album(
+        stubs.append(
+            _AlbumStub(
                 album_id=album_id,
-                page_url=HttpUrl(BASE_URL + href),
+                page_url=href,
                 title=str(img.get("alt", "")).strip(),
-                cover_url=HttpUrl(str(img.get("src", ""))),
+                cover_url=str(img.get("src", "")),
                 artist=artist_tag.text,
                 release_date=release_date,
                 catalog_number=(
                     catalog_number_elm.text.strip() if catalog_number_elm else None
                 ),
-                tracklists=tracklists,
             ),
         )
-    return albums
+    return stubs
 
 
 def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
@@ -191,7 +236,8 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
         session (Session): A requests session.
 
     Returns:
-        list[Tracklist]: A list of tracklists.
+        list[Tracklist]: A list of tracklists. The tracks carry no ``trial_url``
+            yet; see `resolve_trial_url`.
     """
     release_url = f"{BASE_URL}/release/{album_id}"
     # print(release_url)  # debug  # noqa: ERA001
@@ -208,10 +254,6 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
         ):
             item_number = item_idx + 1
             track_id = item_elm.get("data-id")
-            resolve_url = (
-                f"{BASE_URL}/player/resolve/{album_id}-{list_number}-{item_number}"
-            )
-            # print(resolve_url)  # debug  # noqa: ERA001
             title_tag = item_elm.find(
                 "h3", class_="actions-track-name"
             ) or item_elm.find("span", itemprop=True)
@@ -223,7 +265,6 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
                     track_id=str(track_id),
                     title=title_tag.text.strip(),
                     page_url=HttpUrl(f"{release_url}#track-{track_id}"),
-                    trial_url=HttpUrl(__fetch(resolve_url, session).text.strip()),
                     number=item_number,
                     duration=duration_tag.text.strip(),
                     description=item_elm.p.text if item_elm.p else None,
@@ -235,4 +276,30 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
     return tracklists
 
 
-__all__ = ("FetchError", "generate_albums")
+def resolve_trial_url(
+    album_id: str,
+    tracklist_number: int,
+    track_number: int,
+    session: Session,
+) -> HttpUrl:
+    """Ask the site for the audio URL of a single track.
+
+    This costs one request per track, so it is done only for tracks that are
+    about to be downloaded instead of for every track of every listed album.
+
+    Args:
+        album_id (str): The album ID.
+        tracklist_number (int): The 1-based tracklist (disc) number.
+        track_number (int): The 1-based track number within the tracklist.
+        session (Session): A requests session.
+
+    Returns:
+        HttpUrl: The URL of the audio file.
+    """
+    resolve_url = (
+        f"{BASE_URL}/player/resolve/{album_id}-{tracklist_number}-{track_number}"
+    )
+    return HttpUrl(__fetch(resolve_url, session).text.strip())
+
+
+__all__ = ("FetchError", "generate_albums", "resolve_trial_url")

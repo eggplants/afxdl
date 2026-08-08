@@ -16,7 +16,8 @@ class Track(BaseModel, validate_assignment=True):
     number: int = Field(..., gt=0)
     duration: str = Field(..., min_length=4, pattern=r"^\d{1,2}:\d{2}$")
     description: str | None = Field(..., min_length=1)
-    trial_url: HttpUrl
+    # Resolved lazily right before downloading; see `afxdl.parse.resolve_trial_url`.
+    trial_url: HttpUrl | None = None
 
 
 class Tracklist(BaseModel, validate_assignment=True):
