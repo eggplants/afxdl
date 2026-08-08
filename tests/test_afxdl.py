@@ -4,14 +4,16 @@ import tempfile
 from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from pydantic import HttpUrl
+from wafsolver import TOKEN_COOKIE, WafSolveError
 
 from afxdl import __version__
 from afxdl.main import main
 from afxdl.models import Album, Track, Tracklist
+from afxdl.parse import FetchError, generate_albums
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -222,6 +224,69 @@ def test_main_empty_album_generator(
 
         captured = capfd.readouterr()
         assert "[+] All Finished!" in captured.out
+
+
+def test_main_reports_fetch_error(
+    capfd: pytest.CaptureFixture[str],
+    temp_dir: Path,
+) -> None:
+    """Test main function exits with an error when the site blocks the request."""
+
+    def blocked() -> Generator[Album, None, None]:
+        msg = "blocked"
+        raise FetchError(msg)
+        yield
+
+    with patch("afxdl.main.generate_albums") as mock_gen:
+        mock_gen.return_value = blocked()
+
+        with pytest.raises(SystemExit) as e:
+            main(test_args=[str(temp_dir)])
+
+        assert e.value.code == 1
+        captured = capfd.readouterr()
+        assert "[!] blocked" in captured.err
+        assert "[+] All Finished!" not in captured.out
+
+
+def test_generate_albums_solves_waf_challenge() -> None:
+    """Test that a WAF challenge is solved and the request retried."""
+    challenge = Mock(
+        headers={"x-amzn-waf-action": "challenge"},
+        ok=True,
+        status_code=202,
+        text="<challenge page>",
+    )
+    empty_page = Mock(headers={}, ok=True, status_code=200, text="<html></html>")
+    session = Mock()
+    session.get.side_effect = [challenge, empty_page]
+
+    with patch("afxdl.parse.solve_challenge", return_value="tok") as mock_solve:
+        assert list(generate_albums(session)) == []
+
+    mock_solve.assert_called_once_with("aphextwin.warp.net", "<challenge page>")
+    session.cookies.set.assert_called_once_with(
+        TOKEN_COOKIE,
+        "tok",
+        domain="aphextwin.warp.net",
+    )
+
+
+def test_generate_albums_reports_unsolvable_challenge() -> None:
+    """Test that a challenge which cannot be solved is reported."""
+    session = Mock()
+    session.get.return_value = Mock(
+        headers={"x-amzn-waf-action": "challenge"},
+        ok=True,
+        status_code=202,
+        text="<challenge page>",
+    )
+
+    with (
+        patch("afxdl.parse.solve_challenge", side_effect=WafSolveError("nope")),
+        pytest.raises(FetchError, match="nope"),
+    ):
+        next(generate_albums(session))
 
 
 def test_track_model_validation(sample_track: Track) -> None:

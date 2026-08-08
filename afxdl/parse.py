@@ -7,16 +7,24 @@ import locale
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from pydantic import HttpUrl
+from wafsolver import (
+    ACTION_HEADER,
+    TOKEN_COOKIE,
+    WafSolveError,
+    is_challenged,
+    solve_challenge,
+)
 
 from .models import Album, Track, Tracklist
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from requests import Session
+    from requests import Response, Session
 
 # Change locale temporary for parsing the release date. (e.g. "August 21, 2015")
 try:
@@ -28,6 +36,69 @@ except locale.Error:
 
 # Base URL for the website.
 BASE_URL = "https://aphextwin.warp.net"
+
+
+class FetchError(Exception):
+    """Raised when the website does not return the expected content."""
+
+
+def __fetch(url: str, session: Session) -> Response:
+    """Fetch a URL and make sure the response is really from the website.
+
+    The site sits behind AWS WAF, which answers bot-like requests with a
+    JavaScript challenge page instead of the content. When that happens the
+    challenge is solved once and the resulting token is kept on the session,
+    so later requests go straight through.
+
+    Args:
+        url (str): The URL to fetch.
+        session (Session): A requests session.
+
+    Raises:
+        FetchError: If the response is a WAF challenge that could not be
+            solved, or an error status.
+
+    Returns:
+        Response: The response.
+    """
+    res = session.get(url)
+    if is_challenged(res.headers):
+        res = __solve_challenge(url, session, res.text)
+
+    waf_action = res.headers.get(ACTION_HEADER)
+    if waf_action:
+        msg = (
+            f"{url} was blocked by AWS WAF (x-amzn-waf-action: {waf_action}) "
+            "and the challenge could not be solved."
+        )
+        raise FetchError(msg)
+    if not res.ok:
+        msg = f"{url} returned HTTP {res.status_code}."
+        raise FetchError(msg)
+    return res
+
+
+def __solve_challenge(url: str, session: Session, challenge_html: str) -> Response:
+    """Solve a WAF challenge, store the token, and retry the request once.
+
+    Args:
+        url (str): The URL that was challenged.
+        session (Session): A requests session; the token is stored on it.
+        challenge_html (str): The challenge page body.
+
+    Raises:
+        FetchError: If the challenge could not be solved.
+
+    Returns:
+        Response: The response to the retried request.
+    """
+    domain = urlparse(BASE_URL).hostname or ""
+    try:
+        token = solve_challenge(domain, challenge_html)
+    except WafSolveError as err:
+        raise FetchError(str(err)) from err
+    session.cookies.set(TOKEN_COOKIE, token, domain=domain)
+    return session.get(url)
 
 
 def generate_albums(session: Session) -> Generator[Album, None, None]:
@@ -64,7 +135,7 @@ def __get_albums_by_page(
         list[Album] | None: A list of albums or None if no more albums to fetch.
     """
     bs = BeautifulSoup(
-        session.get(f"{BASE_URL}/fragment/releases/{page_idx}").text,
+        __fetch(f"{BASE_URL}/fragment/releases/{page_idx}", session).text,
         "html.parser",
     )
     albums: list[Album] = []
@@ -125,7 +196,7 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
     """
     release_url = f"{BASE_URL}/release/{album_id}"
     # print(release_url)  # debug  # noqa: ERA001
-    bs = BeautifulSoup(session.get(release_url).text, "html.parser")
+    bs = BeautifulSoup(__fetch(release_url, session).text, "html.parser")
 
     tracklists: list[Tracklist] = []
     indexed_list_elms = enumerate(bs.select("div[id^='track-list-'] > ol.track-list"))
@@ -153,7 +224,7 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
                     track_id=str(track_id),
                     title=title_tag.text.strip(),
                     page_url=HttpUrl(f"{release_url}#track-{track_id}"),
-                    trial_url=HttpUrl(session.get(resolve_url).text.strip()),
+                    trial_url=HttpUrl(__fetch(resolve_url, session).text.strip()),
                     number=item_number,
                     duration=duration_tag.text.strip(),
                     description=item_elm.p.text if item_elm.p else None,
@@ -165,4 +236,4 @@ def __get_tracklists(album_id: str, session: Session) -> list[Tracklist]:
     return tracklists
 
 
-__all__ = ("generate_albums",)
+__all__ = ("FetchError", "generate_albums")

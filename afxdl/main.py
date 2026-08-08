@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 from shutil import get_terminal_size
 
@@ -11,7 +12,7 @@ from requests.adapters import HTTPAdapter, Retry
 
 from . import __version__
 from .download import download
-from .parse import generate_albums
+from .parse import FetchError, generate_albums
 
 
 class CustomFormatter(
@@ -118,7 +119,11 @@ def main(test_args: list[str] | None = None) -> None:
         for idx, _ in enumerate(iter(int, 1)):
             print(f"[λ] === {idx + 1:03} ===")
             print("[-] Fetching album information...")
-            album = next(album_generator, True)
+            try:
+                album = next(album_generator, True)
+            except FetchError as err:
+                print(f"[!] {err}", file=sys.stderr)
+                sys.exit(1)
             if isinstance(album, bool):
                 break
             total_track = sum(len(tl.tracks) for tl in album.tracklists)
