@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 from shutil import get_terminal_size
-from typing import Any
+from typing import Any, Self
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -51,7 +51,7 @@ class VerboseRetry(Retry):
     looks like the program has hung.
     """
 
-    def increment(self, *args: Any, **kwargs: Any) -> Retry:  # noqa: ANN401
+    def increment(self, *args: Any, **kwargs: Any) -> Self:  # noqa: ANN401
         """Report the upcoming backoff, then delegate to `Retry.increment`.
 
         Args:
@@ -59,7 +59,7 @@ class VerboseRetry(Retry):
             **kwargs (Any): Keyword arguments for `Retry.increment`.
 
         Returns:
-            Retry: The retry state for the next attempt.
+            Self: The retry state for the next attempt.
         """
         retry = super().increment(*args, **kwargs)
         last = retry.history[-1] if retry.history else None
