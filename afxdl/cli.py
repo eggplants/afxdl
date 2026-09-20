@@ -1,4 +1,4 @@
-"""Main module for afxdl."""
+"""Command line entry point for afxdl."""
 
 from __future__ import annotations
 

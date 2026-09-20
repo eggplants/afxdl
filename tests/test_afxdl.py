@@ -11,7 +11,7 @@ from pydantic import HttpUrl
 from wafsolver import TOKEN_COOKIE, WafSolveError
 
 from afxdl import __version__
-from afxdl.main import main
+from afxdl.cli import main
 from afxdl.models import Album, Track, Tracklist
 from afxdl.parse import BASE_URL, FetchError, generate_albums, resolve_trial_url
 
@@ -99,8 +99,8 @@ def test_main_with_default_dir(
 ) -> None:
     """Test main function with default directory."""
     with (
-        patch("afxdl.main.generate_albums") as mock_gen,
-        patch("afxdl.main.download") as mock_download,
+        patch("afxdl.cli.generate_albums") as mock_gen,
+        patch("afxdl.cli.download") as mock_download,
     ):
         mock_gen.return_value = iter([sample_album, True])
         mock_download.return_value = temp_dir / "test-album"
@@ -121,8 +121,8 @@ def test_main_with_overwrite(
 ) -> None:
     """Test main function with overwrite option."""
     with (
-        patch("afxdl.main.generate_albums") as mock_gen,
-        patch("afxdl.main.download") as mock_download,
+        patch("afxdl.cli.generate_albums") as mock_gen,
+        patch("afxdl.cli.download") as mock_download,
     ):
         mock_gen.return_value = iter([sample_album, True])
         mock_download.return_value = temp_dir / "test-album"
@@ -141,8 +141,8 @@ def test_main_with_dry_run(
 ) -> None:
     """Test main function with dry run option."""
     with (
-        patch("afxdl.main.generate_albums") as mock_gen,
-        patch("afxdl.main.download") as mock_download,
+        patch("afxdl.cli.generate_albums") as mock_gen,
+        patch("afxdl.cli.download") as mock_download,
     ):
         mock_gen.return_value = iter([sample_album, True])
         mock_download.return_value = temp_dir / "test-album"
@@ -163,8 +163,8 @@ def test_main_skip_existing_album(
 ) -> None:
     """Test main function skipping existing album."""
     with (
-        patch("afxdl.main.generate_albums") as mock_gen,
-        patch("afxdl.main.download") as mock_download,
+        patch("afxdl.cli.generate_albums") as mock_gen,
+        patch("afxdl.cli.download") as mock_download,
     ):
         mock_gen.return_value = iter([sample_album, True])
         mock_download.return_value = None  # Indicates album already exists
@@ -195,8 +195,8 @@ def test_main_with_multiple_albums(
     )
 
     with (
-        patch("afxdl.main.generate_albums") as mock_gen,
-        patch("afxdl.main.download") as mock_download,
+        patch("afxdl.cli.generate_albums") as mock_gen,
+        patch("afxdl.cli.download") as mock_download,
     ):
         mock_gen.return_value = iter([sample_album, album2, True])
         mock_download.side_effect = [
@@ -217,7 +217,7 @@ def test_main_empty_album_generator(
     temp_dir: Path,
 ) -> None:
     """Test main function with empty album generator."""
-    with patch("afxdl.main.generate_albums") as mock_gen:
+    with patch("afxdl.cli.generate_albums") as mock_gen:
         mock_gen.return_value = iter([True])
 
         main(test_args=[str(temp_dir)])
@@ -237,7 +237,7 @@ def test_main_reports_fetch_error(
         raise FetchError(msg)
         yield
 
-    with patch("afxdl.main.generate_albums") as mock_gen:
+    with patch("afxdl.cli.generate_albums") as mock_gen:
         mock_gen.return_value = blocked()
 
         with pytest.raises(SystemExit) as e:
